@@ -53,36 +53,49 @@ public class DbMediator {
 		connect();
 		UserList users = new UserList();
 		RoleList roles = new RoleList();
+		
 		int userId;
 		String userEmail = null;
 		String userFullName = null;
 		int roleId = 0;
 		String roleName = null;
-		User user = null;
 		int prevUserId = 0;
+		String prevUserEmail = null;
+		String prevUserFullName = null;
+//		int prevRoleId = 0;
+//		String prevRoleName = null;
+		
+		User user = null;
 		try {
 			this.prepStmt = getConn().prepareStatement("select " + "u.id, u.email, u.full_name, r.id, r.name"
-					+ " from user u" + " inner join user_role on ur.user_id = u.id"
-					+ " inndr join role r    on ur.role_id = r.id" + " order by u.id");
+					+ " from users u" + " inner join user_role ur on ur.user_id = u.id"
+					+ " inner join roles r    on ur.role_id = r.id" + " order by u.id");
 			this.rset = this.prepStmt.executeQuery();
 			Role role;
 			while (rset.next()) {
 				userId = rset.getInt(1);
-				if (prevUserId == 0) {
-					prevUserId = userId;
-				}
 				userEmail = rset.getString(2);
 				userFullName = rset.getString(3);
+				if (prevUserId == 0) {
+					prevUserId = userId;
+					prevUserEmail = userEmail;
+					prevUserFullName = userFullName;
+				}
 				roleId = rset.getInt(4);
 				roleName = rset.getString(5);
 				if (userId != prevUserId) {
-					user = new User(userId, userEmail, userFullName, roles);
+					user = new User(prevUserId, prevUserEmail, prevUserFullName, roles);
 					users.add(user);
 					prevUserId = userId;
+					prevUserEmail = userEmail;
+					prevUserFullName = userFullName;
+					roles = new RoleList();
 				}
 				role = new Role(roleId, roleName);
 				roles.add(role);
 			}
+			user = new User(prevUserId, prevUserEmail, prevUserFullName, roles);
+			users.add(user);
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
